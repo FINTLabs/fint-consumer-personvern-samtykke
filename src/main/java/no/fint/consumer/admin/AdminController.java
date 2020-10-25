@@ -46,20 +46,23 @@ public class AdminController {
     private ConsumerProps props;
 
     @GetMapping("/health")
-    public ResponseEntity healthCheck(@RequestHeader(HeaderConstants.ORG_ID) String orgId,
+    public ResponseEntity<Event<Health>> healthCheck(@RequestHeader(HeaderConstants.ORG_ID) String orgId,
                                       @RequestHeader(HeaderConstants.CLIENT) String client) {
+        log.debug("Health check on {} requested by {} ...", orgId, client);
         Event<Health> event = new Event<>(orgId, Constants.COMPONENT, DefaultActions.HEALTH, client);
         event.addData(new Health(Constants.COMPONENT_CONSUMER, HealthStatus.SENT_FROM_CONSUMER_TO_PROVIDER));
-        Optional<Event<Health>> health = consumerEventUtil.healthCheck(event);
 
-        if (health.isPresent()) {
-            Event<Health> receivedHealth = health.get();
-            receivedHealth.addData(new Health(Constants.COMPONENT_CONSUMER, HealthStatus.RECEIVED_IN_CONSUMER_FROM_PROVIDER));
-            return ResponseEntity.ok(receivedHealth);
-        } else {
+        final Optional<Event<Health>> response = consumerEventUtil.healthCheck(event);
+
+        return response.map(health ->  {
+            log.debug("Health check response: {}", health.getData());
+            health.addData(new Health(Constants.COMPONENT_CONSUMER, HealthStatus.RECEIVED_IN_CONSUMER_FROM_PROVIDER));
+            return ResponseEntity.ok(health);
+        }).orElseGet(() -> {
+            log.debug("No response to health event.");
             event.setMessage("No response from adapter");
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(event);
-        }
+        });
     }
 
     @GetMapping("/organisations")
