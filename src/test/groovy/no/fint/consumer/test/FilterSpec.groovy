@@ -131,7 +131,7 @@ class FilterSpec extends MockMvcSpecification {
         def resource = newSamtykkeResource('system-id', '01010122222')
 
         when:
-        def test = PropertyFilter.filter(resource, 'links.person', 'any', 'href', PropertyFilterOperator.EQUALS, '/fodselsnummer/01010122222')
+        def test = PropertyFilter.filter(resource, 'links.person', 'any', 'href', PropertyFilterOperator.EQUALS, '${felles.person}/fodselsnummer/01010122222')
 
         then:
         test
@@ -144,7 +144,7 @@ class FilterSpec extends MockMvcSpecification {
                 newSamtykkeResource('system-id', '01010133333'))
 
         when:
-        def test = PropertyFilter.from(resources, 'links/person/any(p:p/href eq \'/fodselsnummer/01010122222\')')
+        def test = PropertyFilter.from(resources, 'links/person/any(p:p/href eq \'${felles.person}/fodselsnummer/01010122222\')')
 
         then:
         test.count() == 2

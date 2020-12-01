@@ -68,10 +68,6 @@ public final class PropertyFilter {
                 for (Object item : objects) {
                     Object object = PropertyUtils.getProperty(item, property);
 
-                    if (item instanceof Link) {
-                        object = StringUtils.substringAfterLast(String.valueOf(object), "}");
-                    }
-
                     if (comparator(object, operator, value)) {
                         return true;
                     }
