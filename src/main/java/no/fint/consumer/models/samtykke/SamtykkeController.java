@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import no.fint.model.resource.personvern.samtykke.SamtykkeResource;
@@ -107,7 +106,7 @@ public class SamtykkeController {
             @RequestParam(defaultValue = "0") long sinceTimeStamp,
             @RequestParam(defaultValue = "0") int size,
             @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String $filter,
             HttpServletRequest request) {
         if (cacheService == null) {
             throw new CacheDisabledException("Samtykke cache is disabled.");
@@ -139,8 +138,8 @@ public class SamtykkeController {
             resources = cacheService.streamAll(orgId);
         }
 
-        if (StringUtils.isNotBlank(filter)) {
-            resources = PropertyFilter.of(resources, filter);
+        if (StringUtils.isNotBlank($filter)) {
+            resources = PropertyFilter.from(resources, $filter);
         }
 
         fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
@@ -257,7 +256,7 @@ public class SamtykkeController {
     //
     @ExceptionHandler(FilterException.class)
     public ResponseEntity handleFilterException(FilterException e) {
-        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
+        return ResponseEntity.status(e.getHttpStatus()).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(EventResponseException.class)

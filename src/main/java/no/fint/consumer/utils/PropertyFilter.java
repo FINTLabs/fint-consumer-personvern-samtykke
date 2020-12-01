@@ -5,58 +5,95 @@ import no.fint.model.resource.FintLinks;
 import no.fint.model.resource.Link;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class PropertyFilter {
-    private static final Set<String> delimiters = Arrays.stream(PropertyFilterOperator.values())
-            .map(PropertyFilterOperator::getDelimiter)
+    private static final Set<String> values = Arrays.stream(PropertyFilterOperator.values())
+            .map(PropertyFilterOperator::getValue)
             .collect(Collectors.toSet());
+
+    private final static Pattern PATTERN = Pattern.compile("(?<collection>(?<path>[\\w/]+?)/(?<lambda>any)\\(\\w+:\\w+/)?" +
+            "(?<property>[\\w/]+?) (?<operator>" + String.join("|", values) + ") '(?<value>[\\S ]+?)'\\)?");
 
     private PropertyFilter() {
     }
 
-    public static <T extends FintLinks> Stream<T> of(Stream<T> resources, String filter) {
-        String[] split = filter.split(String.join("|", delimiters));
+    public static <T extends FintLinks> Stream<T> from(Stream<T> resources, String filter) {
+        Matcher matcher = PATTERN.matcher(filter);
 
-        if (split.length == 2) {
-            String property =  StringUtils.deleteWhitespace(split[0]);
-            String value = split[1].trim();
+        if (matcher.matches()) {
+            String collection = matcher.group("collection");
+            String path = matcher.group("path");
+            String lambda = matcher.group("lambda");
+            String property = matcher.group("property").replaceAll("/", ".");
+            PropertyFilterOperator operator = PropertyFilterOperator.valueOfOperator(matcher.group("operator"));
+            String value = matcher.group("value").replaceAll("'", "");
 
-            String delimiter = StringUtils.substringBetween(filter, property, value);
+            if (collection == null) {
+                return resources.filter(resource -> filter(resource, property, operator, value));
+            }
 
-            PropertyFilterOperator operator = PropertyFilterOperator.valueOfOperator(delimiter);
-
-            return resources.filter(resource -> filter(resource, property, operator, value));
-
-        } else {
-            throw new FilterException("Invalid syntax");
+            return resources.filter(resource -> filter(resource, path, lambda, property, operator, value));
         }
+
+        throw new FilterException(HttpStatus.BAD_REQUEST, "Invalid or unsupported syntax");
     }
 
     public static <T extends FintLinks> boolean filter(T resource, String property, PropertyFilterOperator operator, String value) {
         try {
             Object object = PropertyUtils.getProperty(resource, property);
 
-            if (object == null) {
-                throw new FilterException(String.format("%s is null", property));
-            }
+            return comparator(object, operator, value);
 
-            switch (operator) {
-                case EQUALS:
-                    return equals(object, value);
-                case CONTAINS:
-                    return contains(object, value);
-                default:
-                    return false;
+        } catch (Exception e) {
+            throw new FilterException(HttpStatus.BAD_REQUEST, e);
+        }
+    }
+
+    public static <T extends FintLinks> boolean filter(T resource, String path, String lambda, String property, PropertyFilterOperator operator, String value) {
+        try {
+            Object collection = PropertyUtils.getProperty(resource, path.replaceAll("/", "."));
+
+            if (collection instanceof List) {
+                List<Object> objects = new ArrayList<>((List<?>) collection);
+
+                for (Object item : objects) {
+                    Object object = PropertyUtils.getProperty(item, property);
+
+                    if (item instanceof Link) {
+                        object = StringUtils.substringAfterLast(String.valueOf(object), "}");
+                    }
+
+                    if (comparator(object, operator, value)) {
+                        return true;
+                    }
+                }
+
+                return false;
+
+            } else {
+                throw new FilterException(HttpStatus.BAD_REQUEST, String.format("%s is not a collection", path));
             }
 
         } catch (Exception e) {
-            throw new FilterException(e);
+            throw new FilterException(HttpStatus.BAD_REQUEST, e);
+        }
+    }
+
+    private static boolean comparator(Object property, PropertyFilterOperator operator, String value) {
+        switch (operator) {
+            case EQUALS:
+                return equals(property, value);
+            default:
+                throw new FilterException(HttpStatus.NOT_IMPLEMENTED, operator.toString());
         }
     }
 
@@ -70,56 +107,8 @@ public final class PropertyFilter {
         } else if (property instanceof Date) {
             return ((Date) property).toInstant().truncatedTo(ChronoUnit.SECONDS).equals(ZonedDateTime.parse(value).toInstant().truncatedTo(ChronoUnit.SECONDS));
 
-        } else if (property instanceof List) {
-            List<Object> objects = new ArrayList<>((List<?>) property);
-
-            if (objects.isEmpty()) {
-                return false;
-            }
-
-            Object item = objects.get(0);
-
-            if (item instanceof Link) {
-                return objects.stream()
-                        .map(Link.class::cast)
-                        .map(Link::getHref)
-                        .map(String::toLowerCase)
-                        .anyMatch(href -> href.endsWith(value.toLowerCase()));
-
-            } else {
-                throw new FilterException("Not supported yet");
-            }
-
         } else {
-            throw new FilterException("Not supported yet");
-        }
-    }
-
-    private static boolean contains(Object property, String value) {
-        if (property instanceof String) {
-            return String.valueOf(property).toLowerCase().contains(value.toLowerCase());
-        } else if (property instanceof List) {
-            List<Object> objects = new ArrayList<>((List<?>) property);
-
-            if (objects.isEmpty()) {
-                return false;
-            }
-
-            Object item = objects.get(0);
-
-            if (item instanceof Link) {
-                return objects.stream()
-                        .map(Link.class::cast)
-                        .map(Link::getHref)
-                        .map(String::toLowerCase)
-                        .anyMatch(href -> href.contains(value.toLowerCase()));
-
-            } else {
-                throw new FilterException("Not supported yet");
-            }
-
-        } else {
-            throw new FilterException("Not supported yet");
+            throw new FilterException(HttpStatus.NOT_IMPLEMENTED, property.getClass().getSimpleName());
         }
     }
 }

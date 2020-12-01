@@ -5,27 +5,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum PropertyFilterOperator {
-    EQUALS("="),
-    CONTAINS("~");
+    EQUALS("eq");
 
-    private final String delimiter;
+    private final String value;
 
-    private static final Map<String, PropertyFilterOperator> BY_DELIMITER = new HashMap<>();
+    private static final Map<String, PropertyFilterOperator> BY_VALUE = new HashMap<>();
 
     static {
         Arrays.stream(PropertyFilterOperator.values())
-                .forEach(operator -> BY_DELIMITER.put(operator.delimiter, operator));
+                .forEach(operator -> BY_VALUE.put(operator.value, operator));
     }
 
-    PropertyFilterOperator(String delimiter) {
-        this.delimiter = delimiter;
+    PropertyFilterOperator(String value) {
+        this.value = value;
     }
 
-    public String getDelimiter() {
-        return delimiter;
+    public String getValue() {
+        return value;
     }
 
-    public static PropertyFilterOperator valueOfOperator(String delimiter) {
-        return BY_DELIMITER.get(delimiter);
+    public static PropertyFilterOperator valueOfOperator(String value) {
+        return BY_VALUE.get(value);
     }
 }

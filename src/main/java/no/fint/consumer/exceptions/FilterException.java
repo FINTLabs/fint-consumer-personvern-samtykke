@@ -1,12 +1,19 @@
 package no.fint.consumer.exceptions;
 
-public class FilterException extends RuntimeException {
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
-    public FilterException(String message) {
+@Getter
+public class FilterException extends RuntimeException {
+    private final HttpStatus httpStatus;
+
+    public FilterException(HttpStatus httpStatus, String message) {
         super(message);
+        this.httpStatus = httpStatus;
     }
 
-    public FilterException(Throwable cause) {
+    public FilterException(HttpStatus httpStatus, Throwable cause) {
         super(cause);
+        this.httpStatus = httpStatus;
     }
 }

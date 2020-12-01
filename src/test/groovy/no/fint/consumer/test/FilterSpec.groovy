@@ -104,17 +104,6 @@ class FilterSpec extends MockMvcSpecification {
         test
     }
 
-    def "String contains"() {
-        given:
-        def resource = newSamtykkeResource('system-id', '01010122222')
-
-        when:
-        def test = PropertyFilter.filter(resource, 'systemId.identifikatorverdi', PropertyFilterOperator.CONTAINS, 'id')
-
-        then:
-        test
-    }
-
     def "Boolean equals"() {
         given:
         def resource = newBehandlingResource()
@@ -142,47 +131,36 @@ class FilterSpec extends MockMvcSpecification {
         def resource = newSamtykkeResource('system-id', '01010122222')
 
         when:
-        def test = PropertyFilter.filter(resource, 'links.person', PropertyFilterOperator.EQUALS, '${felles.person}/fodselsnummer/01010122222')
+        def test = PropertyFilter.filter(resource, 'links.person', 'any', 'href', PropertyFilterOperator.EQUALS, '/fodselsnummer/01010122222')
 
         then:
         test
     }
 
-    def "List contains"() {
-        given:
-        def resource = newSamtykkeResource('system-id', '01010122222')
-
-        when:
-        def test = PropertyFilter.filter(resource, 'links.person', PropertyFilterOperator.CONTAINS, '01010122222')
-
-        then:
-        test
-    }
-
-    def "Stream equals"() {
+    def "Stream equals collection"() {
         given:
         def resources = Stream.of(newSamtykkeResource('system-id', '01010122222'),
                 newSamtykkeResource('system-id', '01010122222'),
                 newSamtykkeResource('system-id', '01010133333'))
 
         when:
-        def test = PropertyFilter.of(resources, 'links.person=${felles.person}/fodselsnummer/01010122222')
+        def test = PropertyFilter.from(resources, 'links/person/any(p:p/href eq \'/fodselsnummer/01010122222\')')
 
         then:
         test.count() == 2
     }
 
-    def "Stream contains"() {
+    def "Stream equals property"() {
         given:
-        def resources = Stream.of(newSamtykkeResource('system-id', '01010122222'),
-                newSamtykkeResource('system-id', '01010122222'),
-                newSamtykkeResource('system-id', '01010133333'))
+        def resources = Stream.of(newSamtykkeResource('system-id-1', '01010122222'),
+                newSamtykkeResource('system-id-2', '01010122222'),
+                newSamtykkeResource('system-id-3', '01010133333'))
 
         when:
-        def test = PropertyFilter.of(resources, 'links.person~01010122222')
+        def test = PropertyFilter.from(resources, 'systemId/identifikatorverdi eq \'system-id-1\')')
 
         then:
-        test.count() == 2
+        test.count() == 1
     }
 
     def newSamtykkeResource(String systemId, String fodselsnummer) {
