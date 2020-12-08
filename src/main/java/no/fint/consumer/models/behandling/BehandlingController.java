@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import no.fint.antlr.FintFilterService;
 import org.apache.commons.lang3.StringUtils;
 
 import no.fint.audit.FintAuditService;
@@ -53,6 +54,9 @@ public class BehandlingController {
 
     @Autowired(required = false)
     private BehandlingCacheService cacheService;
+
+    @Autowired
+    private FintFilterService oDataFilterService;
 
     @Autowired
     private FintAuditService fintAuditService;
@@ -105,6 +109,7 @@ public class BehandlingController {
             @RequestParam(defaultValue = "0") long sinceTimeStamp,
             @RequestParam(defaultValue = "0") int size,
             @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(required = false) String $filter,
             HttpServletRequest request) {
         if (cacheService == null) {
             throw new CacheDisabledException("Behandling cache is disabled.");
@@ -134,6 +139,10 @@ public class BehandlingController {
             resources = cacheService.streamSince(orgId, sinceTimeStamp);
         } else {
             resources = cacheService.streamAll(orgId);
+        }
+
+        if (StringUtils.isNotBlank($filter)) {
+            resources = oDataFilterService.from(resources, $filter);
         }
 
         fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
