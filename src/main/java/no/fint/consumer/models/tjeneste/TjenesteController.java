@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.antlr.FintFilterService;
+import no.fint.antlr.exception.FilterException;
 import org.apache.commons.lang3.StringUtils;
 
 import no.fint.audit.FintAuditService;
@@ -257,6 +258,11 @@ public class TjenesteController {
     //
     // Exception handlers
     //
+    @ExceptionHandler(FilterException.class)
+    public ResponseEntity handleFilterException(FilterException e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
+    }
+
     @ExceptionHandler(EventResponseException.class)
     public ResponseEntity handleEventResponseException(EventResponseException e) {
         return ResponseEntity.status(e.getStatus()).body(e.getResponse());
