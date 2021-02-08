@@ -3,8 +3,9 @@ package no.fint.consumer.config;
 import no.fint.consumer.utils.RestEndpoints;
 import java.util.Map;
 import com.google.common.collect.ImmutableMap;
-
-import no.fint.model.personvern.samtykke.*;
+import no.fint.model.personvern.samtykke.Behandling;
+import no.fint.model.personvern.samtykke.Samtykke;
+import no.fint.model.personvern.samtykke.Tjeneste;
 
 public class LinkMapper {
 
