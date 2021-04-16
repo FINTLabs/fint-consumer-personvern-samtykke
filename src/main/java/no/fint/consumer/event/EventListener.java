@@ -1,5 +1,7 @@
 package no.fint.consumer.event;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.audit.FintAuditService;
 import no.fint.cache.CacheService;
@@ -15,12 +17,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 @Slf4j
 @Component
 public class EventListener implements FintEventListener {
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     @Autowired(required = false)
     private List<CacheService> cacheServices;
@@ -73,6 +79,9 @@ public class EventListener implements FintEventListener {
             }
             return;
         }
+
+        updateMetrics(event);
+
         if (statusCache.containsKey(event.getCorrId())) {
             statusCache.put(event.getCorrId(), event);
         }
@@ -104,4 +113,10 @@ public class EventListener implements FintEventListener {
         }
     }
 
+    private void updateMetrics(Event event) {
+        meterRegistry.counter(
+                "fint.audit",
+                Arrays.asList(Tag.of("orgId", event.getOrgId()), Tag.of("eventType", event.getAction()), Tag.of("eventStatus", event.getResponseStatus().name())))
+                .increment();
+    }
 }
