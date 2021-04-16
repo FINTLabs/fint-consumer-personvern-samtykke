@@ -114,9 +114,14 @@ public class EventListener implements FintEventListener {
     }
 
     private void updateMetrics(Event event) {
-        meterRegistry.counter(
-                "fint.audit",
-                Arrays.asList(Tag.of("orgId", event.getOrgId()), Tag.of("eventType", event.getAction()), Tag.of("eventStatus", event.getResponseStatus().name())))
-                .increment();
+        meterRegistry.counter("fint.event", getTags(event)).increment();
+    }
+
+    private List<Tag> getTags(Event event) {
+        return Arrays.asList(
+                Tag.of("orgId", event.getOrgId()),
+                Tag.of("client", event.getClient()),
+                Tag.of("eventType", event.getAction()),
+                Tag.of("eventStatus", event.getResponseStatus().name()));
     }
 }
