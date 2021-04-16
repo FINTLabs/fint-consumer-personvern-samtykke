@@ -4,6 +4,7 @@ import no.fint.audit.FintAuditService
 import no.fint.consumer.status.StatusCache
 import no.fint.event.model.Event
 import no.fint.event.model.Status
+import spock.lang.Ignore
 import spock.lang.Specification
 
 class EventListenerSpec extends Specification {
@@ -23,6 +24,7 @@ class EventListenerSpec extends Specification {
                 fintAuditService: fintAuditService)
     }
 
+    @Ignore
     def "No exception is thrown when receiving event"() {
         when:
         eventListener.accept(new Event(corrId: '123'))
