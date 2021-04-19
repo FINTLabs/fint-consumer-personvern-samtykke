@@ -123,6 +123,7 @@ public class EventListener implements FintEventListener {
         return Arrays.asList(
                 Tag.of("orgId", event.getOrgId()),
                 Tag.of("eventType", event.getAction()),
-                Tag.of("eventStatus", event.getResponseStatus().name()));
+                Tag.of("eventOperation", event.getOperation().name()),
+                Tag.of("eventResponseStatus", event.getResponseStatus().name()));
     }
 }
