@@ -25,6 +25,8 @@ import java.util.List;
 @Component
 public class EventListener implements FintEventListener {
 
+    private static final String EVENT_METRIC = "fint.event";
+
     @Autowired
     private MeterRegistry meterRegistry;
 
@@ -114,13 +116,13 @@ public class EventListener implements FintEventListener {
     }
 
     private void updateMetrics(Event event) {
-        meterRegistry.counter("fint.event", getTags(event)).increment();
+        meterRegistry.counter(EVENT_METRIC, getTags(event)).increment();
     }
 
     private List<Tag> getTags(Event event) {
+        event.get
         return Arrays.asList(
                 Tag.of("orgId", event.getOrgId()),
-                Tag.of("client", event.getClient()),
                 Tag.of("eventType", event.getAction()),
                 Tag.of("eventStatus", event.getResponseStatus().name()));
     }
