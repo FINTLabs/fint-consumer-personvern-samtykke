@@ -120,7 +120,6 @@ public class EventListener implements FintEventListener {
     }
 
     private List<Tag> getTags(Event event) {
-        event.get
         return Arrays.asList(
                 Tag.of("orgId", event.getOrgId()),
                 Tag.of("eventType", event.getAction()),
