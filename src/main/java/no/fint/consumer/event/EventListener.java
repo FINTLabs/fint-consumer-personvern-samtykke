@@ -20,6 +20,7 @@ import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -123,7 +124,7 @@ public class EventListener implements FintEventListener {
         return Arrays.asList(
                 Tag.of("orgId", event.getOrgId()),
                 Tag.of("eventType", event.getAction()),
-                Tag.of("eventOperation", event.getOperation().name()),
+                Tag.of("eventOperation", Optional.ofNullable(event.getOperation()).map(Operation::name).orElse("READ")),
                 Tag.of("eventResponseStatus", event.getResponseStatus().name()));
     }
 }
