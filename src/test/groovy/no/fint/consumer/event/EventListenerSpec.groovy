@@ -24,7 +24,6 @@ class EventListenerSpec extends Specification {
                 fintAuditService: fintAuditService)
     }
 
-    @Ignore
     def "No exception is thrown when receiving event"() {
         when:
         eventListener.accept(new Event(corrId: '123'))

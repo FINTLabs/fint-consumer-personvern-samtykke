@@ -7,6 +7,7 @@ import no.fint.audit.FintAuditService;
 import no.fint.cache.CacheService;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
+import no.fint.consumer.metrics.CustomMetricEvents;
 import no.fint.consumer.status.StatusCache;
 import no.fint.event.model.*;
 import no.fint.events.FintEventListener;
@@ -26,10 +27,8 @@ import java.util.Optional;
 @Component
 public class EventListener implements FintEventListener {
 
-    private static final String EVENT_METRIC = "fint.event";
-
-    @Autowired
-    private MeterRegistry meterRegistry;
+    @Autowired(required = false)
+    private CustomMetricEvents customMetricEvents;
 
     @Autowired(required = false)
     private List<CacheService> cacheServices;
@@ -83,7 +82,10 @@ public class EventListener implements FintEventListener {
             return;
         }
 
-        updateMetrics(event);
+        try {
+            customMetricEvents.update(event);
+        } catch (Exception ignored) {
+        }
 
         if (statusCache.containsKey(event.getCorrId())) {
             statusCache.put(event.getCorrId(), event);
@@ -114,17 +116,5 @@ public class EventListener implements FintEventListener {
             event.setMessage(ExceptionUtils.getStackTrace(e));
             fintAuditService.audit(event, Status.ERROR);
         }
-    }
-
-    private void updateMetrics(Event event) {
-        meterRegistry.counter(EVENT_METRIC, getTags(event)).increment();
-    }
-
-    private List<Tag> getTags(Event event) {
-        return Arrays.asList(
-                Tag.of("orgId", event.getOrgId()),
-                Tag.of("eventType", event.getAction()),
-                Tag.of("eventOperation", Optional.ofNullable(event.getOperation()).map(Operation::name).orElse("READ")),
-                Tag.of("eventResponseStatus", event.getResponseStatus().name()));
     }
 }
