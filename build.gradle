@@ -26,30 +26,26 @@ apply plugin: 'jacoco'
 version = "${version}-${apiVersion}"
 
 repositories {
-    mavenLocal()
+    maven { url 'https://repo.fintlabs.no/releases' }
     jcenter()
-    maven {
-        url "http://dl.bintray.com/fint/maven"
-    }
+    mavenLocal()
 }
 
 dependencies {
 
     compile("no.fint:fint-personvern-resource-model-java:${apiVersion}")
 
-    compile('no.fint:fint-audit-azure-eventhub-plugin:0.3.0')
+    compile('no.fint:fint-audit-azure-eventhub-plugin:1.0.0')
     compile('io.projectreactor:reactor-core:3.3.2.RELEASE')
 
-    compile('no.fint:fint-antlr:1.0.0-alpha-14')
-
-    compile('no.fint:fint-api-service-discover:1.1.0')
-    compile('no.fint:fint-cache:2.6.0')
-    compile('no.fint:fint-dependencies:0.0.3')
-    compile('no.fint:fint-event-model:3.0.0')
-    compile('no.fint:fint-events:2.3.0')
-    compile('no.fint:fint-hazelcast:1.2.0-rc-1')
-    compile('no.fint:fint-relations:2.2.0')
-    compile('no.fint:fint-spring-secrets:0.1.0')
+    compile('no.fintlabs:fint-antlr:1.0.0-beta-6')
+    compile('no.fint:fint-api-service-discover:1.2.0')
+    compile('no.fint:fint-cache:2.8.0')
+    compile('no.fint:fint-event-model:3.0.1')
+    compile('no.fint:fint-events:2.4.0')
+    compile('no.fint:fint-hazelcast:1.2.0')
+    compile('no.fint:fint-relations:2.2.1')
+    compile('no.fint:fint-spring-secrets:0.2.2')
 
     compile('com.hazelcast:hazelcast:3.11.2')
     compile('com.hazelcast:hazelcast-kubernetes:1.3.1')
@@ -62,8 +58,8 @@ dependencies {
     
     compile('io.micrometer:micrometer-registry-prometheus:latest.release')
     compile('io.micrometer:micrometer-spring-legacy:latest.release')
-    
-    testCompile('no.fint:fint-test-utils:0.0.5')
+
+    testCompile('no.fint:fint-test-utils:0.0.6')
     testCompile("cglib:cglib-nodep:${cglibVersion}")
     testCompile("org.spockframework:spock-spring:${spockSpringVersion}")
     testCompile("org.spockframework:spock-core:${spockSpringVersion}")
